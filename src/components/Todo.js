@@ -16,8 +16,6 @@ export default function Todo({ todo }) {
   return (
     <div>
       <h1 className={todo.complete ? 'complete' : ''}>{todo.title}</h1>
-      <button onClick={deleteTodo}>Delete</button>
-      <button onClick={completeTodo}>Complete</button>
     </div>
   );
 }

@@ -7,10 +7,9 @@ import UploadImage from './components/UploadImage';
 export default function App() {
   return (
     <div className="App">
-      <h1>Todo</h1>
+      <h1>Before I Die I Want To...</h1>
       <Form />
       <TodoList />
-      <UploadImage />
     </div>
   );
 }

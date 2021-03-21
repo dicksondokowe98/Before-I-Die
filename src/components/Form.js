@@ -18,8 +18,13 @@ export default function Form() {
   };
   return (
     <div>
-      <input type="text" onChange={handleOnChange} value={title} />
-      <button onClick={createTodo}>Add Todo</button>
+      <input type="text" onChange={handleOnChange}
+      onKeyPress={event => {
+        if (event.key === 'Enter') {
+          {createTodo()}
+        }
+      }}
+       value={title} />
     </div>
   );
 }
