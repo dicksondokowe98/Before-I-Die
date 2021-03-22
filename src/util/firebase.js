@@ -1,16 +1,15 @@
 import firebase from 'firebase';
 
 const firebaseConfig = {
-    apiKey: "AIzaSyDxgrRPIDzW0QVdO1y2oUG6ltGw725ECAs",
-    databaseURL: 'https://crud-before-i-die-default-rtdb.firebaseio.com',
-    authDomain: "crud-before-i-die.firebaseapp.com",
-    projectId: "crud-before-i-die",
-    storageBucket: "crud-before-i-die.appspot.com",
-    messagingSenderId: "713619931160",
-    appId: "1:713619931160:web:b573dbe52cdc597403036d",
-    measurementId: "G-8VZZVMVHP1"
+    apiKey: "AIzaSyBWWgfRin7Rmm8pdwkG1qEwJ6CEDxynBjw",
+    databaseURL: 'https://beforeidieiwantto-default-rtdb.firebaseio.com',
+    authDomain: "beforeidieiwantto.firebaseapp.com",
+    projectId: "beforeidieiwantto",
+    storageBucket: "beforeidieiwantto.appspot.com",
+    messagingSenderId: "380871446865",
+    appId: "1:380871446865:web:6160c965175d9842a40370",
+    measurementId: "G-JPV0MZ79FG"
   };
-
 // Initialize Firebase
 firebase.initializeApp(firebaseConfig);
 

@@ -15,7 +15,7 @@ export default function Todo({ todo }) {
   };
   return (
     <div>
-      <h1 className={todo.complete ? 'complete' : ''}>{todo.title}</h1>
+      <p className={todo.complete ? 'complete' : 'beforeIDieEntry'}>{todo.title}</p>
     </div>
   );
 }

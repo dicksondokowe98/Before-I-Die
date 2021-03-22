@@ -18,12 +18,16 @@ export default function Form() {
   };
   return (
     <div>
-      <input type="text" onChange={handleOnChange}
+      <input 
+      placeholder="I want to..."
+      type="text" style={{width: "370px"}} onChange={handleOnChange}
       onKeyPress={event => {
         if (event.key === 'Enter') {
           {createTodo()}
+          setTitle("")
         }
       }}
+      
        value={title} />
     </div>
   );
