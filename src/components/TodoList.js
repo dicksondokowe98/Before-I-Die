@@ -13,12 +13,13 @@ export default function TodoList() {
       for (let id in todos) {
         todoList.push({ id, ...todos[id] });
       }
+      todoList.reverse();
       setTodoList(todoList);
     });
   }, []);
 
   return (
-    <div>
+    <div style={{position:'relative', boxSizing:'border-box'}}>
       {todoList
         ? todoList.map((todo, index) => <Todo todo={todo} key={index} />)
         : ''}

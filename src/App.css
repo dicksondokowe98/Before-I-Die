@@ -39,3 +39,7 @@
 .complete {
   text-decoration: line-through;
 }
+
+.beforeIDieEntry {
+    width : 100%
+}
