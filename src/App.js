@@ -237,7 +237,8 @@ export default class App extends React.Component {
             </p>
           )}
       <h1>Before I Die</h1>
-      <Form />
+      <Form 
+        item={this.state.item}/>
       <TodoList />
       <PageViewCounter />
     </div>

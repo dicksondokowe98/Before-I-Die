@@ -2,9 +2,12 @@ import React, { useState } from 'react';
 import firebase from '../util/firebase';
 import $ from 'jquery';
 import { object } from 'prop-types';
+import SpotifyWebApi from 'spotify-web-api-node';
 
-export default function Form() {
+const Form = props => {
   const [title, setTitle] = useState('');
+  const [songId, setSong] = useState('');
+
   const aCity = {
       name: 'not changed city nsmr'
   }
@@ -35,7 +38,11 @@ function ipLookUp (aCity) {
     setTitle(e.target.value);
   };
 
-
+  function updateSongId() {
+    setSong(props.item.id);
+    console.log(props.item.id);
+  }
+  
   const createTodo = () => {
     const todoRef = firebase.database().ref('Todo');
     var messageCreatedDate = new Date(Date.now()).toLocaleString();
@@ -44,7 +51,8 @@ function ipLookUp (aCity) {
       title,
       complete: false,
       date: messageCreatedDate,
-      city: aCity.name
+      city: aCity.name,
+      songId: songId
     };
 
     todoRef.push(todo);
@@ -57,7 +65,10 @@ function ipLookUp (aCity) {
       onKeyPress={event => {
         if (event.key === 'Enter') {
             if (!isEmptyOrSpaces(title)) {
+                updateSongId();
                 ipLookUp(aCity);
+
+
                 setTitle("")
             }
 
@@ -68,3 +79,5 @@ function ipLookUp (aCity) {
     </div>
   );
 }
+
+export default Form;
