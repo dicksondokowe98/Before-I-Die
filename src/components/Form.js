@@ -36,12 +36,9 @@ function ipLookUp (aCity) {
 
   const handleOnChange = (e) => {
     setTitle(e.target.value);
+    setSong(props.item.id);
   };
 
-  function updateSongId() {
-    setSong(props.item.id);
-    console.log(props.item.id);
-  }
   
   const createTodo = () => {
     const todoRef = firebase.database().ref('Todo');
@@ -65,7 +62,6 @@ function ipLookUp (aCity) {
       onKeyPress={event => {
         if (event.key === 'Enter') {
             if (!isEmptyOrSpaces(title)) {
-                updateSongId();
                 ipLookUp(aCity);
 
 

@@ -2,9 +2,13 @@ import React, { useState, useEffect } from 'react';
 import firebase from '../util/firebase';
 import Todo from './Todo';
 
-export default function TodoList() {
-  const [todoList, setTodoList] = useState();
 
+  const TodoList = props => {
+  const [todoList, setTodoList] = useState();
+  const [token, setToken] = useState(props.token);
+
+
+  useEffect(() => { setToken(props.token) }, [props.token]);
   useEffect(() => {
     const todoRef = firebase.database().ref('Todo');
     todoRef.on('value', (snapshot) => {
@@ -15,14 +19,17 @@ export default function TodoList() {
       }
       todoList.reverse();
       setTodoList(todoList);
+      //setToken(token);
     });
   }, []);
 
   return (
-    <div style={{position:'relative', boxSizing:'border-box'}}>
+    <div  style={{position:'relative', boxSizing:'border-box'}}>
       {todoList
-        ? todoList.map((todo, index) => <Todo todo={todo} key={index} />)
+        ? todoList.map((todo, index) => <Todo spotifyApi={props.spotifyApi} token={token} todo={todo} key={index} />)
         : ''}
     </div>
   );
 }
+
+export default TodoList

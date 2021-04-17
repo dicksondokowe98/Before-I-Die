@@ -11,7 +11,7 @@ import { authEndpoint, clientId, redirectUri, scopes } from "./config";
 import hash from "./hash";
 import Player from "./Player";
 import logo from "./music.svg";
-
+import equal from 'fast-deep-equal';
 
 var SpotifyWebApi = require('spotify-web-api-node');
 var pageOfSavedTracks = [];
@@ -46,7 +46,7 @@ Date.prototype.toIsoString = function() {
 }
 const doSomething = (value, total, alls) =>
   new Promise(resolve => 
-    resolve(value >= 100  ? 'ok': 'no'))
+    resolve(value >= 2  ? 'ok': 'no'))
 
     const loop = async (value, alls) => {
         let result = null
@@ -55,7 +55,6 @@ const doSomething = (value, total, alls) =>
 
         var go = await spotifyApi.getMySavedTracks({limit:1,offset:0}).then(function(data) {total =  data.body.total; alls = data.body.items});
         while (result != 'ok') {
-          console.log(value)
           //spotify
           var gg = await spotifyApi.getMySavedTracks({
             limit : 50,
@@ -74,7 +73,6 @@ const doSomething = (value, total, alls) =>
           result = await doSomething(value, total, alls)
           value = value + 50
         }
-        console.log('yay')
 
         return alls;
       }
@@ -84,15 +82,13 @@ const go = async function() {
     spotifyApi.setAccessToken(_token);
 
     loop(1, ['a']).then((res) => {
-        console.log(res);
         var dd = new Date();
         var date2 = new Date(dd).toDateString();
         var todaysSong = "";
         res.forEach(entry => {
-                  var date1 = new Date(entry.added_at).toDateString();if (date1 == date2) {todaysSong = entry.track.id; console.log(entry.track.id);}})
+                  var date1 = new Date(entry.added_at).toDateString();if (date1 == date2) {todaysSong = entry.track.id;}})
     
         spotifyApi.getTrack(todaysSong).then(data => {
-        console.log(data.body);
         this.setState({
             item: data.body,
             is_playing: data.is_playing,
@@ -100,7 +96,6 @@ const go = async function() {
             no_data: false /* We need to "reset" the boolean, in case the
                             user does not give F5 and has opened his Spotify. */
         });
-        debugger;
         }) 
         })
 
@@ -112,7 +107,12 @@ export default class App extends React.Component {
     constructor() {
       super();
       this.state = {
-        token: null,
+         spotifyApi : new SpotifyWebApi({
+            clientId: '4753f10680f943c5845424eda8abb1d3',
+            clientSecret: '3154e4ecff3d40a1b73628a26743aba8',
+            redirectUri: 'http://localhost:3000/redirect'
+          }),
+        token: hash.access_token,
         item: {
           album: {
             images: [{ url: "" }]
@@ -143,15 +143,13 @@ export default class App extends React.Component {
           var alltracks = [];
               var dd = new Date();
           loop(1, ['a']).then((res) => {
-              console.log(res);
               var date2 = new Date(dd).toDateString();
     
               var todaysSong = "";
               res.forEach(entry => {
-                  var date1 = new Date(entry.added_at).toDateString();if (date1 == date2) {todaysSong = entry.track.id; console.log(entry.track.id);}})
+                  var date1 = new Date(entry.added_at).toDateString();if (date1 == date2) {todaysSong = entry.track.id;}})
     
                   spotifyApi.getTrack(todaysSong).then(data => {
-                    console.log(data.body);
                     
                                     this.setState({
                     item: data.body,
@@ -174,6 +172,8 @@ export default class App extends React.Component {
         // clear the interval to save resources
         clearInterval(this.interval);
       }
+
+
     
       tick() {
         if(this.state.token) {
@@ -209,8 +209,9 @@ export default class App extends React.Component {
           }
         });
       }
-  
+
     render() {
+
   return (
     <div className="App">
                   <img src={logo} className="App-log" alt="log" />
@@ -239,7 +240,7 @@ export default class App extends React.Component {
       <h1>Before I Die</h1>
       <Form 
         item={this.state.item}/>
-      <TodoList />
+      <TodoList spotifyApi={this.state.spotifyApi}  token={this.state.token}/>
       <PageViewCounter />
     </div>
           
