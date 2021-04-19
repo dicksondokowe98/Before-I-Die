@@ -1,7 +1,7 @@
-import React from 'react';
+import React, {useEffect} from 'react';
 import './App.css';
 import Form from './components/Form';
-import TodoList from './components/TodoList';
+import JournalEntriesList from './components/JournalEntriesList';
 import UploadImage from './components/UploadImage';
 import firebase from './util/firebase';
 import PageViewCounter from './components/PageViewCounter';
@@ -12,6 +12,7 @@ import hash from "./hash";
 import Player from "./Player";
 import logo from "./music.svg";
 import equal from 'fast-deep-equal';
+import { throwStatement } from '@babel/types';
 
 var SpotifyWebApi = require('spotify-web-api-node');
 var pageOfSavedTracks = [];
@@ -28,6 +29,11 @@ var spotifyApi = new SpotifyWebApi({
     "user-read-playback-state",
 ];
 
+Date.prototype.withoutTime = function () {
+    var d = new Date(this);
+    d.setHours(0, 0, 0, 0);
+    return d;
+}
 
 Date.prototype.toIsoString = function() {
     var tzo = -this.getTimezoneOffset(),
@@ -58,13 +64,11 @@ const doSomething = (value, total, alls) =>
           //spotify
           var gg = await spotifyApi.getMySavedTracks({
             limit : 50,
-            offset: value
-          
+            offset: 0        
         })
           .then(function(data) {
             pageOfSavedTracks = data.body.items;
             alls = alls.concat(data.body.items);
-            //tracks =[["a"], ["b"]];// [AllSavedTracks, pageOfSavedTracks];
           }, function(err) {
             console.log('Something went wrong!', err);
           });
@@ -76,30 +80,7 @@ const doSomething = (value, total, alls) =>
 
         return alls;
       }
-    
-const go = async function() {
-    let _token = hash.access_token;
-    spotifyApi.setAccessToken(_token);
 
-    loop(1, ['a']).then((res) => {
-        var dd = new Date();
-        var date2 = new Date(dd).toDateString();
-        var todaysSong = "";
-        res.forEach(entry => {
-                  var date1 = new Date(entry.added_at).toDateString();if (date1 == date2) {todaysSong = entry.track.id;}})
-    
-        spotifyApi.getTrack(todaysSong).then(data => {
-        this.setState({
-            item: data.body,
-            is_playing: data.is_playing,
-            progress_ms: data.progress_ms,
-            no_data: false /* We need to "reset" the boolean, in case the
-                            user does not give F5 and has opened his Spotify. */
-        });
-        }) 
-        })
-
-}
 
 
 
@@ -113,6 +94,7 @@ export default class App extends React.Component {
             redirectUri: 'http://localhost:3000/redirect'
           }),
         token: hash.access_token,
+        isThereANewEntry: false,
         item: {
           album: {
             images: [{ url: "" }]
@@ -125,10 +107,17 @@ export default class App extends React.Component {
         progress_ms: 0,
         no_data: false,
       };
+      this.updateOnNewEntry = this.updateOnNewEntry.bind(this);//clearly comment what this is doing, roughly it is making updateonentry visible to child components if passsed doen as a function
+    }
+
+    updateOnNewEntry() {
+        this.setState({
+            isThereANewEntry: true,
+        })
     }
 
 
-
+    
     componentDidMount() {
         // Set token
         let _token = hash.access_token;
@@ -143,31 +132,86 @@ export default class App extends React.Component {
           var alltracks = [];
               var dd = new Date();
           loop(1, ['a']).then((res) => {
-              var date2 = new Date(dd).toDateString();
-    
-              var todaysSong = "";
-              res.forEach(entry => {
-                  var date1 = new Date(entry.added_at).toDateString();if (date1 == date2) {todaysSong = entry.track.id;}})
-    
-                  spotifyApi.getTrack(todaysSong).then(data => {
-                    
-                                    this.setState({
-                    item: data.body,
-                    is_playing: data.is_playing,
-                    progress_ms: data.progress_ms,
-                    no_data: false /* We need to "reset" the boolean, in case the
-                                      user does not give F5 and has opened his Spotify. */
-                  });
-                  })
+              var date2 = new Date();
+              var aSongFromToday = "";
+              var todaysSongsList = [];
+              var isFirstSongOfToday = true;
+              var date1;
+
+              for (let entry of res) {
+                date1 = new Date(entry.added_at);
                   
-          });
-          }
-    
+                //dates.compare(new Date(), date1);
+                var a = date2.withoutTime().getTime();
+                var b = date1.withoutTime().getTime()
+
+                if (!(date2.withoutTime().getTime() === date1.withoutTime().getTime())) {
+                  break;
+                }
+                else {
+                    aSongFromToday = entry.track.id;
+                    spotifyApi.getTrack(aSongFromToday).then(data => {
+
+                        if(isFirstSongOfToday) {
+                        this.setState({
+                            item: data.body,
+                            is_playing: data.is_playing,
+                            progress_ms: data.progress_ms,
+                            no_data: false /* We need to "reset" the boolean, in case the
+                          user does not give F5 and has opened his Spotify. */
+                          });          
+                          isFirstSongOfToday = false;                         
+                        } else {
+                            todaysSongsList.push(data.body);
+                          }
+                        });
+                }
+            }                       
+            });
+        }
         // set interval for polling every 5 seconds
         //this.interval = setInterval(() => this.tick(), 5000);
-      }
+    }
     
-    
+    componentDidUpdate() {
+        if(this.state.isThereANewEntry) {
+            loop(1, ['a']).then((res) => {
+                var date2 = new Date();
+                var todaysSong = "";
+                var date1;
+  
+                for (let entry of res) {
+                  date1 = new Date(entry.added_at);
+                    
+                  //dates.compare(new Date(), date1);
+                  var a = date2.withoutTime().getTime();
+                  var b = date1.withoutTime().getTime()
+  
+                  if (!(date2.withoutTime().getTime() === date1.withoutTime().getTime())) {
+                    break;
+                  }
+                  else {
+  
+                    todaysSong = entry.track.id;
+                    spotifyApi.getTrack(todaysSong).then(data => {
+                      
+                      this.setState({
+      isThereANewEntry: false,
+      item: data.body,
+      is_playing: data.is_playing,
+      progress_ms: data.progress_ms,
+      no_data: false /* We need to "reset" the boolean, in case the
+                        user does not give F5 and has opened his Spotify. */
+    });
+    })
+                  }               
+                }
+  
+  
+                    
+            });
+        }
+    }
       componentWillUnmount() {
         // clear the interval to save resources
         clearInterval(this.interval);
@@ -237,10 +281,13 @@ export default class App extends React.Component {
               You need to be playing a song on Spotify, for something to appear here.
             </p>
           )}
-      <h1>Before I Die</h1>
+      <h1>Music Journal
+          
+      </h1>
       <Form 
-        item={this.state.item}/>
-      <TodoList spotifyApi={this.state.spotifyApi}  token={this.state.token}/>
+        item={this.state.item}
+        updateOnNewEntry={this.updateOnNewEntry}/>
+      <JournalEntriesList spotifyApi={this.state.spotifyApi}  token={this.state.token} isThereANewEntry={this.state.isThereANewEntry}/>
       <PageViewCounter />
     </div>
           

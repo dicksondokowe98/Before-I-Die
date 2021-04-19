@@ -20,7 +20,8 @@ function ipLookUp (aCity) {
     .then(
         function success(response) {
             aCity.name = response.city;
-            {createTodo()}
+            {createJournalEntry()};
+            this.props.updateOnNewEntry();
         },
   
         function fail(data, status) {
@@ -40,11 +41,11 @@ function ipLookUp (aCity) {
   };
 
   
-  const createTodo = () => {
-    const todoRef = firebase.database().ref('Todo');
+  const createJournalEntry = () => {
+    const journalEntryRef = firebase.database().ref('journalEntry');
     var messageCreatedDate = new Date(Date.now()).toLocaleString();
 
-    const todo = {
+    const journalEntry = {
       title,
       complete: false,
       date: messageCreatedDate,
@@ -52,7 +53,7 @@ function ipLookUp (aCity) {
       songId: songId
     };
 
-    todoRef.push(todo);
+    journalEntryRef.push(journalEntry);
   };
   return (
     <div style={{position:'relative'}}>
