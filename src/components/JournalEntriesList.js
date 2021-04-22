@@ -20,6 +20,7 @@ import JournalEntry from './JournalEntry';
       setUserId(userId);
       for (let id in journalEntries) {
         if (journalEntries[id].userId == userId) {
+            
           journal.push({ id, ...journalEntries[id] });           
         }
     }

@@ -23,10 +23,12 @@ import {
     Link,
     withRouter
   } from "react-router-dom";
+import { localeLowerCase } from 'lower-case';
 
 var SpotifyWebApi = require('spotify-web-api-node');
 var pageOfSavedTracks = [];
 var AllSavedTracks = [];
+
 
 
 // credentials are optional
@@ -39,6 +41,7 @@ var spotifyApi = new SpotifyWebApi({
     "user-top-read",
     "user-read-currently-playing",
     "user-read-playback-state",
+    "user-library-read"
 ];
 
 Date.prototype.withoutTime = function () {
@@ -64,30 +67,34 @@ Date.prototype.toIsoString = function() {
 }
 const doSomething = (value, total, alls) =>
   new Promise(resolve => 
-    resolve(value >= 2  ? 'ok': 'no'))
+    resolve(value >= 1  ? 'ok': 'no'))
 
-    const loop = async (value, alls) => {
+    const loop = async (value, alls, token) => {
         let result = null
         var total = 0;
         var allSongs = ['allsongs'];
 
-        var go = await spotifyApi.getMySavedTracks({limit:1,offset:0}).then(function(data) {total =  data.body.total; alls = data.body.items});
         while (result != 'ok') {
-          //spotify
-          var gg = await spotifyApi.getMySavedTracks({
-            limit : 50,
-            offset: 0        
-        })
-          .then(function(data) {
-            pageOfSavedTracks = data.body.items;
-            alls = alls.concat(data.body.items);
-          }, function(err) {
-            console.log('Something went wrong!', err);
-          });
+    //         await $.ajax({
+    //             url: "https://api.spotify.com/v1/me/tracks?limit=1&offset=0",
+    //             type: "GET",
+    //             beforeSend: xhr => {
+    //                 xhr.setRequestHeader('Accept', 'application/json');
+    // xhr.setRequestHeader('Content-Type', 'application/json');
+    //               xhr.setRequestHeader("Authorization", "Bearer " + token);
+    //             }}).done(data => {
 
+    //             pageOfSavedTracks = data.items;
+    //             alls = alls.concat(data.items);
+    //             debugger;
+    //             return alls;
+    //           });
+            spotifyApi.setAccessToken(token);
+            var res = await spotifyApi.getMySavedTracks({limit: 10});
+            alls = alls.concat(res.body.items);
 
           result = await doSomething(value, total, alls)
-          value = value + 50
+          value = value + 50;
         }
 
         return alls;
@@ -100,14 +107,17 @@ export default class App extends React.Component {
     constructor() {
       super();
       this.state = {
-         spotifyApi : new SpotifyWebApi({
+        selectedOption: localStorage.getItem( 'SelectedOption' ) || 1,
+         spotifyApi : new SpotifyWebApi(JSON.parse(localStorage.getItem('spotifyApi'))) || new SpotifyWebApi({
             clientId: '4753f10680f943c5845424eda8abb1d3',
             clientSecret: '3154e4ecff3d40a1b73628a26743aba8',
             redirectUri: 'http://localhost:3000/redirect'
           }),
-        token: hash.access_token,
-        isThereANewEntry: false,
-        item: {
+        token: localStorage.getItem('token') || hash.access_token,
+        isThereANewEntry: localStorage.getItem('isThereANewEntry') || false,
+        isSignedIn: localStorage.getItem( 'isSignedIn' ) || false,
+
+        item: JSON.parse(localStorage.getItem('item')) || {
           album: {
             images: [{ url: "" }]
           },
@@ -119,6 +129,8 @@ export default class App extends React.Component {
         progress_ms: 0,
         no_data: false,
       };
+      this.state.spotifyApi.setAccessToken(this.state.token);
+      this.getPlaying = this.getPlaying.bind(this);
       this.updateOnNewEntry = this.updateOnNewEntry.bind(this);//clearly comment what this is doing, roughly it is making updateonentry visible to child components if passsed doen as a function
     }
 
@@ -128,24 +140,52 @@ export default class App extends React.Component {
         })
     }
 
-
+    async getPlaying(token) {
+        // Make a call using the token
+        await $.ajax({
+          url: "https://api.spotify.com/v1/me/player",
+          type: "GET",
+          beforeSend: xhr => {
+            xhr.setRequestHeader("Authorization", "Bearer " + token);
+          },
+          success: data => {
+            // Checks if the data is not empty
+            if(!data) {
+              this.setState({
+                no_data: true,
+              });
+              return;
+            }
+            localStorage.setItem('item', JSON.stringify(data.item));
+            this.setState({
+              item: data.item,
+              is_playing: data.is_playing,
+              progress_ms: data.progress_ms,
+              no_data: false 
+            });
+          }
+        });
+      }
     
     componentDidMount() {
         // Set token
-        let _token = hash.access_token;
+        let aToken = hash.access_token;
 
     
-        if (_token) {
+        if (aToken) {
           // Set token
+          localStorage.setItem('token', aToken);
           this.setState({
-            token: _token
+            token: aToken,
           });
-          //this.getCurrentlyPlaying(_token);
-          spotifyApi.setAccessToken(_token);
+
+          spotifyApi.setAccessToken(aToken);
+          localStorage.setItem('spotifyApi', JSON.stringify(spotifyApi));
 
           var alltracks = [];
               var dd = new Date();
-          loop(1, ['a']).then((res) => {
+          loop(1, [], aToken).then((res) => {
+              res.push(this.state.item);
               var date2 = new Date();
               var aSongFromToday = "";
               var todaysSongsList = [];
@@ -160,12 +200,14 @@ export default class App extends React.Component {
                 var b = date1.withoutTime().getTime()
 
                 if (!(date2.withoutTime().getTime() === date1.withoutTime().getTime())) {
+
                   break;
                 }
                 else {
                     aSongFromToday = entry.track.id;
                     spotifyApi.getTrack(aSongFromToday).then(data => {
                         if(isFirstSongOfToday) {
+                            localStorage.setItem('item', JSON.stringify(data.body));
                         this.setState({
                             item: data.body,
                             is_playing: data.is_playing,
@@ -181,13 +223,16 @@ export default class App extends React.Component {
             }                       
             });
         }
-        // set interval for polling every 5 seconds
-        //this.interval = setInterval(() => this.tick(), 5000);
+        this.timer = setInterval(()=> this.getItems(), 10000);
     }
     
     componentDidUpdate() {
+        if(!this.state.isSignedIn){localStorage.setItem( 'isSignedIn', true );this.setState({isSignedIn: true});}
+
         if(this.state.isThereANewEntry) {
-            loop(1, ['a']).then((res) => {
+
+            loop(1, ['a'], this.state.token).then((res) => {
+
                 var date2 = new Date();
                 var aSongFromToday = "";
                 var todaysSongsList = [];
@@ -208,6 +253,7 @@ export default class App extends React.Component {
                       aSongFromToday = entry.track.id;
                       spotifyApi.getTrack(aSongFromToday).then(data => {
                           if(isFirstSongOfToday) {
+                          localStorage.setItem('item', JSON.stringify(data.body));
                           this.setState({
                               item: data.body,
                               is_playing: data.is_playing,
@@ -222,6 +268,7 @@ export default class App extends React.Component {
                   }
               }                       
               });
+              window.location.reload();
         }
     }
       componentWillUnmount() {
@@ -232,6 +279,51 @@ export default class App extends React.Component {
 
     
 
+      getItems() {
+        spotifyApi.setAccessToken(this.state.token);
+        localStorage.setItem('spotifyApi', JSON.stringify(spotifyApi));
+
+        var alltracks = [];
+            var dd = new Date();
+        loop(1, [], this.state.token).then((res) => {
+            res.push(this.state.item);
+            var date2 = new Date();
+            var aSongFromToday = "";
+            var todaysSongsList = [];
+            var isFirstSongOfToday = true;
+            var date1;
+
+            for (let entry of res) {
+              date1 = new Date(entry.added_at);
+                
+              //dates.compare(new Date(), date1);
+              var a = date2.withoutTime().getTime();
+              var b = date1.withoutTime().getTime()
+
+              if (!(date2.withoutTime().getTime() === date1.withoutTime().getTime())) {
+
+                break;
+              }
+              else {
+                  aSongFromToday = entry.track.id;
+                  spotifyApi.getTrack(aSongFromToday).then(data => {
+                      if(isFirstSongOfToday) {
+                          localStorage.setItem('item', JSON.stringify(data.body));
+                      this.setState({
+                          item: data.body,
+                          is_playing: data.is_playing,
+                          progress_ms: data.progress_ms,
+                          no_data: false /* We need to "reset" the boolean, in case the
+                        user does not give F5 and has opened his Spotify. */
+                        });          
+                        isFirstSongOfToday = false;                         
+                      } 
+                        todaysSongsList.push(data.body);
+                      });
+              }
+          }                       
+          });
+      }
 
       getCurrentlyPlaying(token) {
         // Make a call using the token
@@ -249,7 +341,7 @@ export default class App extends React.Component {
               });
               return;
             }
-    
+            localStorage.setItem('item', JSON.stringify(data.item));
             this.setState({
               item: data.item,
               is_playing: data.is_playing,
@@ -260,13 +352,23 @@ export default class App extends React.Component {
         });
       }
 
-    render() {
+      
 
+    render() {
+    
   return (
     <div className="App">
-        <Navigation/>
+        <div>
+            <ul>
+                <li>
+                    <Link to="/journal">journal</Link>
+                </li>
+            </ul>
+        </div>
 
-                  <img src={logo} className="App-log" alt="log" />
+        <Switch>
+            <Route exact path="/journal">      {this.state.isSignedIn && (<JournalEntriesList spotifyApi={this.state.spotifyApi}  token={this.state.token} isThereANewEntry={this.state.isThereANewEntry}/>)}</Route>
+            <Route path="/"> <div>                 <img src={logo} className="App-log" alt="log" />
                   <h1>Music Journal
           
           </h1>
@@ -288,17 +390,20 @@ export default class App extends React.Component {
             />
           )}
           {this.state.no_data && (
-            <p>
-              You need to be playing a song on Spotify, for something to appear here.
-            </p>
+            <h6>
+              Have you liked a song today? Make sure it's saved on spotify!
+            </h6>
           )}
 
-      <Form
+      {this.state.isSignedIn && (<Form
         spotifyApi={this.state.spotifyApi}
         item={this.state.item}
-        updateOnNewEntry={this.updateOnNewEntry}/>
-      <JournalEntriesList spotifyApi={this.state.spotifyApi}  token={this.state.token} isThereANewEntry={this.state.isThereANewEntry}/>
-      <PageViewCounter />
+        updateOnNewEntry={this.updateOnNewEntry}
+        token={this.state.token}
+        getPlaying={this.getPlaying}/>)}
+
+      </div></Route>
+        </Switch>
     </div>
           
   );
