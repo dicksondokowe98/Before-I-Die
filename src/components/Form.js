@@ -43,23 +43,27 @@ function ipLookUp (aCity) {
   
   const createJournalEntry = () => {
     const journalEntryRef = firebase.database().ref('journalEntry');
-    var messageCreatedDate = new Date(Date.now()).toLocaleString();
 
+    props.spotifyApi.getMe().then((data) => {
+        //console.log(data);
+    var messageCreatedDate = new Date(Date.now()).toLocaleString();        
     const journalEntry = {
-      title,
-      complete: false,
-      date: messageCreatedDate,
-      city: aCity.name,
-      songId: songId
-    };
+        title,
+        complete: false,
+        date: messageCreatedDate,
+        city: aCity.name,
+        songId: songId,
+        userId: data.body.id
+      };
+      journalEntryRef.push(journalEntry);
+    });
 
-    journalEntryRef.push(journalEntry);
   };
   return (
-    <div style={{position:'relative'}}>
+    <div style={{position:'relative', display: "inline-block"}}>
       <input 
-      placeholder="I want to..."
-      type="text" style={{width: "370px"}} onChange={handleOnChange}
+      placeholder="The song reminds me of..."
+      type="text" style={{width: "450px", height: "100px"}} onChange={handleOnChange}
       onKeyPress={event => {
         if (event.key === 'Enter') {
             if (!isEmptyOrSpaces(title)) {

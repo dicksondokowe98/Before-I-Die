@@ -34,7 +34,7 @@ export default function PageViewCounter() {
     };
     return (
         <div style={{position:'relative', bottom:'0', left:'10', width:'100%', position:'fixed', textAlign:'left'}}>
-            <h6>{creatAndUpdatePageViews()}visits: {pageViewCount}</h6>
+            {/* <h6>{creatAndUpdatePageViews()}visits: {pageViewCount}</h6> */}
         </div>
     );
 }

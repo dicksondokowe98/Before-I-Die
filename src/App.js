@@ -6,6 +6,7 @@ import UploadImage from './components/UploadImage';
 import firebase from './util/firebase';
 import PageViewCounter from './components/PageViewCounter';
 
+import Signup from './components/pages/Signup';
 import * as $ from "jquery";
 import { authEndpoint, clientId, redirectUri, scopes } from "./config";
 import hash from "./hash";
@@ -13,10 +14,21 @@ import Player from "./Player";
 import logo from "./music.svg";
 import equal from 'fast-deep-equal';
 import { throwStatement } from '@babel/types';
+import Main from './components/Main';
+import Navigation from './components/Navigation'
+import {
+    BrowserRouter as Router,
+    Switch,
+    Route,
+    Link,
+    withRouter
+  } from "react-router-dom";
 
 var SpotifyWebApi = require('spotify-web-api-node');
 var pageOfSavedTracks = [];
 var AllSavedTracks = [];
+
+
 // credentials are optional
 var spotifyApi = new SpotifyWebApi({
     clientId: '4753f10680f943c5845424eda8abb1d3',
@@ -121,14 +133,16 @@ export default class App extends React.Component {
     componentDidMount() {
         // Set token
         let _token = hash.access_token;
+
     
         if (_token) {
           // Set token
           this.setState({
             token: _token
           });
-          this.getCurrentlyPlaying(_token);
+          //this.getCurrentlyPlaying(_token);
           spotifyApi.setAccessToken(_token);
+
           var alltracks = [];
               var dd = new Date();
           loop(1, ['a']).then((res) => {
@@ -151,7 +165,6 @@ export default class App extends React.Component {
                 else {
                     aSongFromToday = entry.track.id;
                     spotifyApi.getTrack(aSongFromToday).then(data => {
-
                         if(isFirstSongOfToday) {
                         this.setState({
                             item: data.body,
@@ -161,9 +174,8 @@ export default class App extends React.Component {
                           user does not give F5 and has opened his Spotify. */
                           });          
                           isFirstSongOfToday = false;                         
-                        } else {
-                            todaysSongsList.push(data.body);
-                          }
+                        } 
+                          todaysSongsList.push(data.body);
                         });
                 }
             }                       
@@ -177,7 +189,9 @@ export default class App extends React.Component {
         if(this.state.isThereANewEntry) {
             loop(1, ['a']).then((res) => {
                 var date2 = new Date();
-                var todaysSong = "";
+                var aSongFromToday = "";
+                var todaysSongsList = [];
+                var isFirstSongOfToday = true;
                 var date1;
   
                 for (let entry of res) {
@@ -191,25 +205,23 @@ export default class App extends React.Component {
                     break;
                   }
                   else {
-  
-                    todaysSong = entry.track.id;
-                    spotifyApi.getTrack(todaysSong).then(data => {
-                      
-                      this.setState({
-      isThereANewEntry: false,
-      item: data.body,
-      is_playing: data.is_playing,
-      progress_ms: data.progress_ms,
-      no_data: false /* We need to "reset" the boolean, in case the
-                        user does not give F5 and has opened his Spotify. */
-    });
-    })
-                  }               
-                }
-  
-  
-                    
-            });
+                      aSongFromToday = entry.track.id;
+                      spotifyApi.getTrack(aSongFromToday).then(data => {
+                          if(isFirstSongOfToday) {
+                          this.setState({
+                              item: data.body,
+                              is_playing: data.is_playing,
+                              progress_ms: data.progress_ms,
+                              no_data: false /* We need to "reset" the boolean, in case the
+                            user does not give F5 and has opened his Spotify. */
+                            });          
+                            isFirstSongOfToday = false;                         
+                          } 
+                            todaysSongsList.push(data.body);
+                          });
+                  }
+              }                       
+              });
         }
     }
       componentWillUnmount() {
@@ -219,11 +231,6 @@ export default class App extends React.Component {
 
 
     
-      tick() {
-        if(this.state.token) {
-          this.getCurrentlyPlaying(this.state.token);
-        }
-      }
 
 
       getCurrentlyPlaying(token) {
@@ -247,8 +254,7 @@ export default class App extends React.Component {
               item: data.item,
               is_playing: data.is_playing,
               progress_ms: data.progress_ms,
-              no_data: false /* We need to "reset" the boolean, in case the
-                                user does not give F5 and has opened his Spotify. */
+              no_data: false 
             });
           }
         });
@@ -258,7 +264,12 @@ export default class App extends React.Component {
 
   return (
     <div className="App">
+        <Navigation/>
+
                   <img src={logo} className="App-log" alt="log" />
+                  <h1>Music Journal
+          
+          </h1>
           {!this.state.token && (
             <a
               className="btn btn--loginApp-link"
@@ -281,10 +292,9 @@ export default class App extends React.Component {
               You need to be playing a song on Spotify, for something to appear here.
             </p>
           )}
-      <h1>Music Journal
-          
-      </h1>
-      <Form 
+
+      <Form
+        spotifyApi={this.state.spotifyApi}
         item={this.state.item}
         updateOnNewEntry={this.updateOnNewEntry}/>
       <JournalEntriesList spotifyApi={this.state.spotifyApi}  token={this.state.token} isThereANewEntry={this.state.isThereANewEntry}/>
@@ -294,3 +304,5 @@ export default class App extends React.Component {
   );
           }
 }
+
+

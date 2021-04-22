@@ -27,7 +27,7 @@ var datetime = "" + currentdate.getDate() + "/"
                 ReactGA.initialize('UA-000000-01');
                 ReactGA.pageview(window.location.pathname + window.location.search);
 
-export default function Todo({ spotifyApi, token, journalEntry }) {
+export default function JournalEntry({ spotifyApi, token, journalEntry }) {
     const [aToken, setToken] = useState(token);
     const [aItem, setItem] = useState();
     const [isEntryRendered, setEntryRendered] = useState(false);//initially false
@@ -57,7 +57,7 @@ export default function Todo({ spotifyApi, token, journalEntry }) {
        if (!aa.value) getSongSpotify(aa); 
   }
 
-  console.log("aItem i.e song track used as a state: " + aItem);
+  //console.log("aItem i.e song track used as a state: " + aItem);
   return (
     <div className='entry'style={{width:'100%', position:'relative', boxSizing:'border-box', display:'flex'}} >
         { spotifyApi && token && aItem && (         <Player

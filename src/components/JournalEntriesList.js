@@ -4,24 +4,44 @@ import JournalEntry from './JournalEntry';
 
 
   const JournalEntriesList = props => {
+    
   const [journalEntriesList, setJournalEntriesList] = useState();
   const [token, setToken] = useState(props.token);
+  const [userId, setUserId] = useState();
+  const [journalEntries, setJournalEntries] = useState();
+  var journal = [];
   const [isReRenderNeeded, setReRender] = useState(props.isThereANewEntry);
 
+    useEffect(() => {
+        setJournalEntries(journalEntries)
+    }, [journalEntries])
 
+  useEffect(() => {
+      setUserId(userId);
+      for (let id in journalEntries) {
+        if (journalEntries[id].userId == userId) {
+          journal.push({ id, ...journalEntries[id] });           
+        }
+    }
+    journal.reverse();
+    setJournalEntriesList(journal);
+    console.log(userId)
+
+  },[userId]);
   useEffect(() => { setToken(props.token) }, [props.token]);
   useEffect(() => {
     const journalRef = firebase.database().ref('journalEntry');
-    journalRef.on('value', (snapshot) => {
-      const journalEntries = snapshot.val();
-    
-      const journal = [];
-      for (let id in journalEntries) {
-        journal.push({ id, ...journalEntries[id] });
-      }
-      journal.reverse();
-      setJournalEntriesList(journal);
-      //setToken(token);
+    journalRef.once('value', (snapshot) => {
+    setJournalEntries(snapshot.val());
+
+    }).then(() => {
+        props.spotifyApi.setAccessToken(token);
+        if (token && props.spotifyApi) props.spotifyApi.getMe().then(data => {
+            setUserId(data.body.id);
+
+ 
+           //setToken(token);
+       })
     });
   }, []);
   return (
