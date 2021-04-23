@@ -41,7 +41,6 @@ export default function JournalEntry({ spotifyApi, token, journalEntry: journalE
             if(journalEntry.songId) {
                 a.value = await spotifyApi.getTrack(journalEntry.songId).then(data => { 
                     setItem(data.body);
-                    if (token && aItem == undefined) debugger;
                     return data.body
             });   
             }

@@ -15,7 +15,7 @@ const Player = props => {
 
   return (
 
-      <div className="main-wrapper" style={{display:"inline-block"}}>
+      <div className="main-wrapper" style={{display:"inline-block", marginLeft:"Auto", transform:"scale(1)"}}>
         <div className="now-playing__img">
           <img src={props.item.album.images[0].url} />
         </div>
@@ -23,12 +23,6 @@ const Player = props => {
           <div className="now-playing__name">{props.item.name}</div>
           <div className="now-playing__artist">
             {props.item.artists[0].name}
-          </div>
-          <div className="now-playing__status">
-            {props.is_playing ? "Playing" : "Paused"}
-          </div>
-          <div className="progress">
-            <div className="progress__bar" style={progressBarStyles} />
           </div>
         </div>
         <div className="background" style={backgroundStyles} />{" "}

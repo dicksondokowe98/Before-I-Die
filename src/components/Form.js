@@ -7,7 +7,7 @@ import SpotifyWebApi from 'spotify-web-api-node';
 const Form = props => {
   const [title, setTitle] = useState('');
   const [songId, setSong] = useState(null);
-
+  const [songTitle, setSongTitle] = useState(null);
   const aCity = {
       name: 'not changed city nsmr'
   }
@@ -31,27 +31,20 @@ function ipLookUp (aCity) {
     );
   }
 
-
-
-
-
   const handleOnChange = (e) => {
     setTitle(e.target.value);
     setSong(props.item.id);//not the best place to call this, i think it's ending up setting the state for every key pressedf
+    setSongTitle(props.item.name);
   };
 
   
   const createJournalEntry = () => {
+
     const journalEntryRef = firebase.database().ref('journalEntry');
-    try {
-      
-    } catch (error) {
-        console.log(error);
-    }
 
     localStorage.setItem('item', JSON.stringify(props.item));
     props.spotifyApi.getMe().then((data) => {
-        //console.log(data);
+    console.log(data);
     var messageCreatedDate = new Date(Date.now()).toLocaleString();        
     const journalEntry = {
         title,
@@ -59,6 +52,7 @@ function ipLookUp (aCity) {
         date: messageCreatedDate,
         city: aCity.name,
         songId: songId,
+        songTitle: songTitle,
         userId: data.body.id
       };
       journalEntryRef.push(journalEntry);
@@ -67,8 +61,9 @@ function ipLookUp (aCity) {
 
   };
   return (
-    <div style={{position:"fixed", top:"400px", left:"800px"}}>
-        <textarea name="txtDescEd" cols="60" rows="10" value={title} onChange={handleOnChange}
+    <div style={{position:"relative", width:"50%", top:"10%", marginLeft:"0%"}}>
+        <textarea name="txtDescEd" cols="60" rows="30" value={title} onChange={handleOnChange}
+        placeholder="What does the song remind you of?"
               onKeyPress={event => {
         if (event.key === 'Enter') {
             if (!isEmptyOrSpaces(title)) {

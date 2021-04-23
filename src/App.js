@@ -1,11 +1,10 @@
-import React, {useEffect} from 'react';
+import React, {useEffect, useLayoutEffect, useState} from 'react';
 import './App.css';
 import Form from './components/Form';
 import JournalEntriesList from './components/JournalEntriesList';
 import UploadImage from './components/UploadImage';
 import firebase from './util/firebase';
 import PageViewCounter from './components/PageViewCounter';
-
 import Signup from './components/pages/Signup';
 import * as $ from "jquery";
 import { authEndpoint, clientId, redirectUri, scopes } from "./config";
@@ -16,6 +15,7 @@ import equal from 'fast-deep-equal';
 import { throwStatement } from '@babel/types';
 import Main from './components/Main';
 import Navigation from './components/Navigation'
+import Search from './components/Search'
 import {
     BrowserRouter as Router,
     Switch,
@@ -36,6 +36,7 @@ var spotifyApi = new SpotifyWebApi({
     clientId: '4753f10680f943c5845424eda8abb1d3',
     clientSecret: '3154e4ecff3d40a1b73628a26743aba8',
     redirectUri: 'http://localhost:3000/redirect'
+    
   });
   var scopess = [
     "user-top-read",
@@ -168,6 +169,7 @@ export default class App extends React.Component {
       }
     
     componentDidMount() {
+        window.addEventListener('resize', this.resize);
         // Set token
         let aToken = hash.access_token;
 
@@ -223,7 +225,7 @@ export default class App extends React.Component {
             }                       
             });
         }
-        this.timer = setInterval(()=> this.getItems(), 10000);
+        if (this.state.isSignedIn) {this.timer = setInterval(()=> this.getItems(), 10000);}
     }
     
     componentDidUpdate() {
@@ -272,8 +274,7 @@ export default class App extends React.Component {
         }
     }
       componentWillUnmount() {
-        // clear the interval to save resources
-        clearInterval(this.interval);
+        window.removeEventListener('resize', this.resize);
       }
 
 
@@ -358,20 +359,14 @@ export default class App extends React.Component {
     
   return (
     <div className="App">
-        <div>
-            <ul>
-                <li>
-                    <Link to="/journal">journal</Link>
-                </li>
-            </ul>
-        </div>
 
         <Switch>
-            <Route exact path="/journal">      {this.state.isSignedIn && (<JournalEntriesList spotifyApi={this.state.spotifyApi}  token={this.state.token} isThereANewEntry={this.state.isThereANewEntry}/>)}</Route>
-            <Route path="/"> <div>                 <img src={logo} className="App-log" alt="log" />
-                  <h1>Music Journal
-          
-          </h1>
+            <Route exact path="/journal">      {this.state.isSignedIn && (<div>    <button className="buttons2" style={{color:"white", backgroundColor:"#008CBA", position:"relative", marginBottom:"10px"}}><Link style={{color:"white", textDecoration:"none"}} to="/">Add Journal Entry</Link></button>
+            <h1>Life Artifacts</h1>
+            <Search/>
+            <JournalEntriesList spotifyApi={this.state.spotifyApi}  token={this.state.token} isThereANewEntry={this.state.isThereANewEntry}/></div>)}</Route>
+            <Route path="/"> <div>                 <img src={logo} className="App-log" alt="log"/>
+                  <div className="heaing" style={{padding:"0px", margin:"0px", border:"0"}}><h1>Music Journal</h1></div>
           {!this.state.token && (
             <a
               className="btn btn--loginApp-link"
@@ -382,6 +377,7 @@ export default class App extends React.Component {
               Login to Spotify
             </a>
           )}
+          <div className="Main" style={{display:"flex"}}>
           {this.state.token && !this.state.no_data && (
             <Player
               item={this.state.item}
@@ -401,7 +397,10 @@ export default class App extends React.Component {
         updateOnNewEntry={this.updateOnNewEntry}
         token={this.state.token}
         getPlaying={this.getPlaying}/>)}
+        </div>
 
+{this.state.isSignedIn && (<button className="buttons" style={{backgroundColor:"#008CBA", position:"relative", left:"35%", top:"0", transform:"scale(1.4)"}} ><Link style={{color:"white", textDecoration:"none"}}  to="/journal">journal</Link></button>)}
+<button className="buttons2" style={{color:"white", backgroundColor:"#f44336", position:"relative", left:"37%", marginBottom:"10px"}}>Sign out</button>
       </div></Route>
         </Switch>
     </div>

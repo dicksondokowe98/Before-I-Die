@@ -2,8 +2,8 @@ import firebase from 'firebase';
 
 const firebaseConfig = {
     apiKey: "AIzaSyBWWgfRin7Rmm8pdwkG1qEwJ6CEDxynBjw",
-    databaseURL: 'https://beforeidieiwantto-default-rtdb.firebaseio.com',
     authDomain: "beforeidieiwantto.firebaseapp.com",
+    databaseURL: "https://beforeidieiwantto-default-rtdb.firebaseio.com",
     projectId: "beforeidieiwantto",
     storageBucket: "beforeidieiwantto.appspot.com",
     messagingSenderId: "380871446865",
@@ -12,5 +12,6 @@ const firebaseConfig = {
   };
 // Initialize Firebase
 firebase.initializeApp(firebaseConfig);
+
 
 export default firebase;
